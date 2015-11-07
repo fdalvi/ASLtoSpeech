@@ -3,7 +3,8 @@ import numpy as np
 import os
 
 def load_data(basepath="../data", quality="high"):
-	""" Reads the time series data from the given basepath. 
+	""" 
+	Reads the time series data from the given basepath. 
 
 	Args:
 		basepath: Root path where the data exists
