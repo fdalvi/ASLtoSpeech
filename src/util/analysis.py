@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+import sklearn.metrics
 
 def plot_signals(signals, labels):
 	"""
@@ -50,3 +52,17 @@ def plot_signals_two_column(left_signals, right_signals, left_labels, right_labe
 		plots[i][1].set_title(right_labels[i])
 
 	plt.show()
+
+def output_error(y_predict, y_true): 
+	"""
+	Outputs several performance metrics of a given model, including precision, 
+	recall, f1score, and error.
+
+	Args:
+		y_predict: an array of the predicted labels of the examples 
+		y_true: an array of the true labels of the examples
+
+	Returns
+		(precision, recall, fscore, _), error 
+	"""
+	return sklearn.metrics.precision_recall_fscore_support(y_true, y_predict), np.sum(y_predict != y_true) / float(y_predict.shape[0])
