@@ -3,6 +3,19 @@ import numpy as np
 import os
 
 def load_data(basepath="../data", quality="high"):
+	""" Reads the time series data from the given basepath. 
+
+	Args:
+		basepath: Root path where the data exists
+			default: "../data"
+		quality: The quality of data that should be returned.
+			default: "high"
+			Valid values: "high", "low"
+	Returns:
+		data: A dictionary where the key is a sign, and the value is a list
+			of numpy matrices, each representing time series data for a specific
+			instance of the signself.
+	"""
 	data = {}
 	if quality == "high":
 		datafiles = [os.path.join(dirpath, f) for dirpath, _, files in os.walk(basepath) for f in fnmatch.filter(files, '*.tsd')]
