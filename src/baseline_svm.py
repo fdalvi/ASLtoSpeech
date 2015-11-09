@@ -16,7 +16,7 @@ def flatten_matrix(X):
 	"""
 	return X.swapaxes(1,2).reshape((X.shape[0], X.shape[1]*X.shape[2]))
 
-def run_svm():
+def run_svm(quality="high"):
 	"""
 	Runs a simple SVM model with a linear kernel; first fits the model
 	on the training data (70 percent of the total data) and tests on 
@@ -28,7 +28,7 @@ def run_svm():
 	Returns: 
 		None
 	"""
-	data = io.load_data()
+	data = io.load_data(quality=quality)
 	X, y, class_names = preprocessing.create_data_tensor(data)	
 	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)
 
@@ -48,6 +48,8 @@ def run_svm():
 	(precision, recall, f1, _), testing_error = analysis.output_error(y_predict, y_test)
 
 	# print out metrics
+	print 'Average Precision:', np.average(precision)
+	print 'Average Recall:', np.average(recall)
 	print 'Average F1:', np.average(f1)
 	print 'Training Error:', training_error
 	print 'Testing Error:', testing_error
