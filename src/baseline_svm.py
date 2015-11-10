@@ -5,18 +5,6 @@ import util.preprocessing as preprocessing
 from sklearn import svm
 from sklearn import metrics
 
-def flatten_matrix(X): 
-	"""
-	Flattens a tensor matrix X to two dimensions. 
-
-	Args:
-		X: matrix with dimensions (x,y,z)
-
-	Returns: 
-		flattened matrix of (x,y*z)
-	"""
-	return X.swapaxes(1,2).reshape((X.shape[0], X.shape[1]*X.shape[2]))
-
 def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names): 
 	"""
 	Runs analyses, including finding error, precision, recall, f1score, plotting
@@ -65,8 +53,8 @@ def run_svm(quality="high"):
 	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)
 	# flattened_Xtrain = flatten_matrix(np.hstack((X_train[:,0:3,:], X_train[:,11:14,:])))
 	# flattened_Xtest = flatten_matrix(np.hstack((X_test[:,0:3,:], X_test[:,11:14,:])))	
-	flattened_Xtrain = flatten_matrix(X_train)
-	flattened_Xtest = flatten_matrix(X_test)	
+	flattened_Xtrain = preprocessing.flatten_matrix(X_train)
+	flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 
 	# fit svm model
 	svm_model = svm.SVC(kernel="linear", decision_function_shape='ovr')

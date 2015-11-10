@@ -1,6 +1,18 @@
 import numpy as np
 import scipy.signal
 
+def flatten_matrix(X): 
+    """
+    Flattens a tensor matrix X to two dimensions. 
+
+    Args:
+        X: matrix with dimensions (x,y,z)
+
+    Returns: 
+        flattened matrix of (x,y*z)
+    """
+    return X.swapaxes(1,2).reshape((X.shape[0], X.shape[1]*X.shape[2]))
+
 def to_fixed_length(data, series_length, axis=0):
     """
     Converts list of arbitrary length np arrays to 2D array of fixed length.
@@ -65,6 +77,9 @@ def create_data_tensor(data, series_length=57):
             sample_idx += 1
 
     return X, y, class_names
+
+# def get_ablated_metrix(X, feature_keyword): 
+#     'pos'
 
 def create_train_test_split(X, y, test_size=0.3, shuffle=False, debug=False):
     """
