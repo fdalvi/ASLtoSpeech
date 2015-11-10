@@ -16,6 +16,18 @@ def flatten_matrix(X):
 	"""
 	return X.swapaxes(1,2).reshape((X.shape[0], X.shape[1]*X.shape[2]))
 
+def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names): 
+	# calculate metrics
+	_, training_error = analysis.output_error(y_predict_train, y_train)
+	(precision, recall, f1, _), testing_error = analysis.output_error(y_predict, y_test)
+	class_names_list = [class_names[index] for index in class_names.keys()]
+	analysis.plot_confusion_matrix(y_predict, y_test, class_names_list)
+
+	# print out metrics
+	print 'Average F1:', np.average(f1)
+	print 'Training Error:', training_error
+	print 'Testing Error:', testing_error
+
 def run_svm():
 	"""
 	Runs a simple SVM model with a linear kernel; first fits the model
@@ -31,7 +43,6 @@ def run_svm():
 	data = io.load_data()
 	X, y, class_names = preprocessing.create_data_tensor(data)	
 	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)
-
 	# flattened_Xtrain = flatten_matrix(np.hstack((X_train[:,0:3,:], X_train[:,11:14,:])))
 	# flattened_Xtest = flatten_matrix(np.hstack((X_test[:,0:3,:], X_test[:,11:14,:])))	
 	flattened_Xtrain = flatten_matrix(X_train)
@@ -43,14 +54,7 @@ def run_svm():
 	y_predict_train = svm_model.predict(flattened_Xtrain)
 	y_predict = svm_model.predict(flattened_Xtest)
 
-	# calculate metrics
-	_, training_error = analysis.output_error(y_predict_train, y_train)
-	(precision, recall, f1, _), testing_error = analysis.output_error(y_predict, y_test)
-
-	# print out metrics
-	print 'Average F1:', np.average(f1)
-	print 'Training Error:', training_error
-	print 'Testing Error:', testing_error
+	run_analyses(y_predict_train, y_train, y_predict, y_test, class_names)
 
 if __name__ == '__main__':
 	run_svm()

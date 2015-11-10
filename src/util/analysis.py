@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import sklearn.metrics
+from sklearn import metrics
 
 def plot_signals(signals, labels):
 	"""
@@ -53,6 +53,23 @@ def plot_signals_two_column(left_signals, right_signals, left_labels, right_labe
 
 	plt.show()
 
+def plot_confusion_matrix(y_predict, y_true, class_names): 
+	##plotting unnormalized confusion matrix
+	cm = metrics.confusion_matrix(y_true, y_predict)
+	# print "cm: "
+	# print cm
+	# plt.figure()
+	plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+	plt.title('confusion matrix of sign multiclassification')
+	plt.tight_layout()
+	# tick_marks = np.arange(len(class_names))
+	# plt.xticks(tick_marks, class_names, rotation=90, fontsize=5)
+	# plt.yticks(tick_marks, class_names, fontsize=5)
+	plt.ylabel('True label')
+	plt.xlabel('Predicted label')
+
+	plt.show()
+
 def output_error(y_predict, y_true): 
 	"""
 	Outputs several performance metrics of a given model, including precision, 
@@ -65,4 +82,4 @@ def output_error(y_predict, y_true):
 	Returns
 		(precision, recall, fscore, _), error 
 	"""
-	return sklearn.metrics.precision_recall_fscore_support(y_true, y_predict), np.sum(y_predict != y_true) / float(y_predict.shape[0])
+	return metrics.precision_recall_fscore_support(y_true, y_predict), np.sum(y_predict != y_true) / float(y_predict.shape[0])
