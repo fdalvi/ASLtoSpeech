@@ -24,11 +24,13 @@ def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names):
 	analysis.plot_confusion_matrix(y_predict, y_test, class_names_list)
 
 	# print out metrics
+	print 'Average Precision:', np.average(precision)
+	print 'Average Recall:', np.average(recall)
 	print 'Average F1:', np.average(f1)
 	print 'Training Error:', training_error
 	print 'Testing Error:', testing_error
 
-def run_svm():
+def run_svm(quality="high"):
 	"""
 	Runs a simple SVM model with a linear kernel; first fits the model
 	on the training data (70 percent of the total data) and tests on 
@@ -40,7 +42,7 @@ def run_svm():
 	Returns: 
 		None
 	"""
-	data = io.load_data()
+	data = io.load_data(quality=quality)
 	X, y, class_names = preprocessing.create_data_tensor(data)	
 	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)
 	# flattened_Xtrain = flatten_matrix(np.hstack((X_train[:,0:3,:], X_train[:,11:14,:])))
