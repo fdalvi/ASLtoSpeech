@@ -3,25 +3,31 @@ import util.analysis as analysis
 import util.io as io
 import util.preprocessing as preprocessing
 from sklearn import svm
-
-def flatten_matrix(X): 
-	"""
-	Flattens a tensor matrix X to two dimensions. 
-
-	Args:
-		X: matrix with dimensions (x,y,z)
-
-	Returns: 
-		flattened matrix of (x,y*z)
-	"""
-	return X.swapaxes(1,2).reshape((X.shape[0], X.shape[1]*X.shape[2]))
+from sklearn import metrics
 
 def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names): 
+	"""
+	Runs analyses, including finding error, precision, recall, f1score, plotting
+	a confusion matrix, on the results of a particular model. Prints out the numeric
+	metrics and plots the graphical ones.
+
+	Args:
+		y_predict_train: the predicted labels on the training examples
+		y_train: true labels on training examples
+		y_predict: predicted labels on testing examples
+		y_test: true labels on testing examples
+		class_names: dictionary that contains the class name that corresponds
+		with the class index 
+
+	Returns: 
+		None
+	"""
 	# calculate metrics
 	_, training_error = analysis.output_error(y_predict_train, y_train)
 	(precision, recall, f1, _), testing_error = analysis.output_error(y_predict, y_test)
 	class_names_list = [class_names[index] for index in class_names.keys()]
-	analysis.plot_confusion_matrix(y_predict, y_test, class_names_list)
+	cm = metrics.confusion_matrix(y_test, y_predict)
+	analysis.plot_confusion_matrix(cm, class_names_list)
 
 	# print out metrics
 	print 'Average Precision:', np.average(precision)
@@ -47,8 +53,8 @@ def run_svm(quality="high"):
 	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)
 	# flattened_Xtrain = flatten_matrix(np.hstack((X_train[:,0:3,:], X_train[:,11:14,:])))
 	# flattened_Xtest = flatten_matrix(np.hstack((X_test[:,0:3,:], X_test[:,11:14,:])))	
-	flattened_Xtrain = flatten_matrix(X_train)
-	flattened_Xtest = flatten_matrix(X_test)	
+	flattened_Xtrain = preprocessing.flatten_matrix(X_train)
+	flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 
 	# fit svm model
 	svm_model = svm.SVC(kernel="linear", decision_function_shape='ovr')
