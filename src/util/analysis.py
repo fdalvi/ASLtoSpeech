@@ -53,18 +53,28 @@ def plot_signals_two_column(left_signals, right_signals, left_labels, right_labe
 
 	plt.show()
 
-def plot_confusion_matrix(y_predict, y_true, class_names): 
+def plot_confusion_matrix(cm, class_names): 
+	"""
+	Plots a confusion matrix. 
+
+	Args:
+		cm: confusion matrix
+		class_names: a list of class names where the index of the class
+		name in the list corresponds to how it was labeled in the models
+
+	Returns: 
+		None
+	"""
 	##plotting unnormalized confusion matrix
-	cm = metrics.confusion_matrix(y_true, y_predict)
-	# print "cm: "
-	# print cm
-	# plt.figure()
 	plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
 	plt.title('confusion matrix of sign multiclassification')
 	plt.tight_layout()
+
+	#uncomment for actual labels 
 	# tick_marks = np.arange(len(class_names))
 	# plt.xticks(tick_marks, class_names, rotation=90, fontsize=5)
 	# plt.yticks(tick_marks, class_names, fontsize=5)
+
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
 
