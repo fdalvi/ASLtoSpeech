@@ -6,6 +6,17 @@ from sklearn import linear_model
 import baseline_svm
 
 def run_logreg(quality='high'):
+	"""
+	Runs a simple logistic regression model; first fits the model
+	on the training data (70 percent of the total data) and tests on 
+	the rest of the data.
+
+	Args:
+		none
+
+	Returns:
+		none
+	"""
 
 	data = io.load_data(quality=quality)
 	X, y, class_names = preprocessing.create_data_tensor(data)	
