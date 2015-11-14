@@ -1,0 +1,98 @@
+fitting svm on feature set without feature position_left_hand...
+running analyses on feature set without feature position_left_hand...
+Average Precision: 0.94846981722
+Average Recall: 0.940972222222
+Average F1: 0.940869485984
+Training Error: 0.0
+Testing Error: 0.059649122807
+fitting svm on feature set without feature rotation_left_hand...
+running analyses on feature set without feature rotation_left_hand...
+Average Precision: 0.936634574916
+Average Recall: 0.9375
+Average F1: 0.934152566363
+Training Error: 0.0
+Testing Error: 0.0631578947368
+fitting svm on feature set without feature left_thumb...
+running analyses on feature set without feature left_thumb...
+Average Precision: 0.935380591631
+Average Recall: 0.931568287037
+Average F1: 0.930799271463
+Training Error: 0.0
+Testing Error: 0.059649122807
+fitting svm on feature set without feature left_forefinger...
+running analyses on feature set without feature left_forefinger...
+Average Precision: 0.942993927369
+Average Recall: 0.943142361111
+Average F1: 0.938280264591
+Training Error: 0.0
+Testing Error: 0.0573099415205
+fitting svm on feature set without feature left_middlefinger...
+running analyses on feature set without feature left_middlefinger...
+Average Precision: 0.952772516835
+Average Recall: 0.948929398148
+Average F1: 0.948512032737
+Training Error: 0.0
+Testing Error: 0.0421052631579
+fitting svm on feature set without feature left_ringfinger...
+running analyses on feature set without feature left_ringfinger...
+Average Precision: 0.944433344433
+Average Recall: 0.939814814815
+Average F1: 0.939340140961
+Training Error: 0.0
+Testing Error: 0.0608187134503
+fitting svm on feature set without feature left_littlefinger...
+running analyses on feature set without feature left_littlefinger...
+Average Precision: 0.952562830688
+Average Recall: 0.951388888889
+Average F1: 0.947870633999
+Training Error: 0.0
+Testing Error: 0.0491228070175
+fitting svm on feature set without feature position_right_hand...
+running analyses on feature set without feature position_right_hand...
+Average Precision: 0.884785902755
+Average Recall: 0.87962962963
+Average F1: 0.875356314868
+Training Error: 0.00175438596491
+Testing Error: 0.121637426901
+fitting svm on feature set without feature rotation_right_hand...
+running analyses on feature set without feature rotation_right_hand...
+Average Precision: 0.900262295575
+Average Recall: 0.89453125
+Average F1: 0.892969412689
+Training Error: 0.00116959064327
+Testing Error: 0.0970760233918
+fitting svm on feature set without feature right_thumb...
+running analyses on feature set without feature right_thumb...
+Average Precision: 0.946401515152
+Average Recall: 0.943287037037
+Average F1: 0.942044666916
+Training Error: 0.0
+Testing Error: 0.0479532163743
+fitting svm on feature set without feature right_forefinger...
+running analyses on feature set without feature right_forefinger...
+Average Precision: 0.937344802189
+Average Recall: 0.931712962963
+Average F1: 0.929701244533
+Training Error: 0.0
+Testing Error: 0.059649122807
+fitting svm on feature set without feature right_middlefinger...
+running analyses on feature set without feature right_middlefinger...
+Average Precision: 0.929650673401
+Average Recall: 0.92115162037
+Average F1: 0.920731751097
+Training Error: 0.0
+Testing Error: 0.0701754385965
+fitting svm on feature set without feature right_ringfinger...
+running analyses on feature set without feature right_ringfinger...
+Average Precision: 0.958476188164
+Average Recall: 0.954716435185
+Average F1: 0.954571228744
+Training Error: 0.0
+Testing Error: 0.0456140350877
+fitting svm on feature set without feature right_littlefinger...
+running analyses on feature set without feature right_littlefinger...
+Average Precision: 0.929416561448
+Average Recall: 0.923611111111
+Average F1: 0.923569122459
+Training Error: 0.0
+Testing Error: 0.0678362573099
