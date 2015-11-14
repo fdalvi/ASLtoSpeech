@@ -37,7 +37,7 @@ def load_data(basepath="../data", quality="high"):
 
 		datafiles = [os.path.join(dirpath, f) for dirpath, _, files in os.walk(os.path.join(basepath, 'low_quality')) for f in fnmatch.filter(files, '*.sign')]
 		for datafile in datafiles:
-			# 	# filename is of the form alive0.tsd, where '0' is the instance number for that recording session
+			# filename is of the form alive0.tsd, where '0' is the instance number for that recording session
 			match = re.search('.+\/(.+)(\d+)\.sign', datafile)
 			sign_name = match.group(1)
 			sign_instance = match.group(2)
