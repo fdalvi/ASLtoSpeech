@@ -50,9 +50,7 @@ def run_svm(quality="high"):
 	"""
 	data = io.load_data(quality=quality)
 	X, y, class_names = preprocessing.create_data_tensor(data)	
-	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)
-	# flattened_Xtrain = flatten_matrix(np.hstack((X_train[:,0:3,:], X_train[:,11:14,:])))
-	# flattened_Xtest = flatten_matrix(np.hstack((X_test[:,0:3,:], X_test[:,11:14,:])))	
+	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)	
 	flattened_Xtrain = preprocessing.flatten_matrix(X_train)
 	flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 

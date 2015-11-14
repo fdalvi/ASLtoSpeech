@@ -68,7 +68,6 @@ def plot_confusion_matrix(cm, class_names):
 	##plotting unnormalized confusion matrix
 	plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
 	plt.title('confusion matrix of sign multiclassification')
-	#plt.tight_layout()
 
 	#uncomment for actual labels 
 	# tick_marks = np.arange(len(class_names))

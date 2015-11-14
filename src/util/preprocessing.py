@@ -1,6 +1,49 @@
 import numpy as np
 import scipy.signal
 
+def get_ablated_matrix(X, position_left_hand=True, position_right_hand=True, rotation_left_hand=True, 
+                        rotation_right_hand=True, left_thumb=True, left_forefinger=True, left_middlefinger=True,  
+                        left_ringfinger=True, left_littlefinger=True, right_thumb=True, right_forefinger=True, 
+                        right_middlefinger=True, right_ringfinger=True, right_littlefinger=True): 
+    """
+    Gets a matrix that contains a subset of the total features. Matrix will 
+    be used to run ablation tests. 
+
+    Args:
+        X: input matrix 
+        position_left_hand, ...: flags that signal whether to include 
+        feature(s) or not
+
+    Returns: 
+        X[:,idx_array,:]: reduced feature matrix
+    """
+    idx_array = []
+    keyword_dict = {
+        "position_left_hand": [0,1,2], "rotation_left_hand": [3,4,5], "left_thumb": [6],
+        "left_forefinger": [7], "left_middlefinger": [8], "left_ringfinger": [9],
+        "left_littlefinger": [10], "position_right_hand": [11,12,13], "rotation_right_hand": [14,15,16],
+        "right_thumb": [17], "right_forefinger": [18], "right_middlefinger": [19],
+        "right_ringfinger": [20], "right_littlefinger": [21]
+    }
+
+    if position_left_hand: idx_array += keyword_dict["position_left_hand"]
+    if rotation_left_hand: idx_array += keyword_dict["rotation_left_hand"]
+    if left_thumb: idx_array += keyword_dict["left_thumb"]
+    if left_forefinger: idx_array += keyword_dict["left_forefinger"]
+    if left_middlefinger: idx_array += keyword_dict["left_middlefinger"]
+    if left_ringfinger: idx_array += keyword_dict["left_ringfinger"]
+    if left_littlefinger: idx_array += keyword_dict["left_littlefinger"]
+    if position_right_hand: idx_array += keyword_dict["position_right_hand"]
+    if rotation_right_hand: idx_array += keyword_dict["rotation_right_hand"]
+    if right_thumb: idx_array += keyword_dict["right_thumb"]
+    if right_forefinger: idx_array += keyword_dict["right_forefinger"]
+    if right_middlefinger: idx_array += keyword_dict["right_middlefinger"]
+    if right_ringfinger: idx_array += keyword_dict["right_ringfinger"]
+    if right_littlefinger: idx_array += keyword_dict["right_littlefinger"]
+    
+    return X[:,idx_array,:]
+
+
 def flatten_matrix(X): 
     """
     Flattens a tensor matrix X to two dimensions. 
@@ -77,9 +120,6 @@ def create_data_tensor(data, series_length=57):
             sample_idx += 1
 
     return X, y, class_names
-
-# def get_ablated_metrix(X, feature_keyword): 
-#     'pos'
 
 def create_train_test_split(X, y, test_size=0.3, shuffle=False, debug=False):
     """
