@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import random
+
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn import metrics
+from sklearn.decomposition import RandomizedPCA
 
 def plot_signals(signals, labels):
 	"""
@@ -93,3 +97,49 @@ def output_error(y_predict, y_true):
 		(precision, recall, fscore, _), error 
 	"""
 	return metrics.precision_recall_fscore_support(y_true, y_predict), np.sum(y_predict != y_true) / float(y_predict.shape[0])
+
+def reduce_dimensions(data, n, random_state=None):
+	"""
+	Reduces the input data's dimension to 'n'.
+
+	Args:
+		data: An M x N matrix, where M is the number of samples and N is the number
+			of features. The dimensions will be reduced from N to n.
+		n: The new number of dimensions
+	Returns:
+		data: An M x n reduced dimension matrix.
+	"""
+	pca = RandomizedPCA(n_components = n, random_state=random_state)
+	return pca.fit_transform(data)
+
+def plot_feature_space(data, labels=None):
+	"""
+	Given the data, plots the data as a 3d plot (by reducing the dimensions using PCA).
+	If labels are passed in, each class is given a color in the 3d plot.
+
+	Args:
+		data: an M x N matrix, where M is the number of points
+		labels: an M x 1 matrix, with the labels for each of the M points
+	Returns:
+		None.
+	"""
+	data = reduce_dimensions(data, 3)
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+
+	if labels != None:
+		classes = np.sort(np.unique(labels))
+		colors = []
+		for i in classes:
+			new_color = "".join([random.choice(['0','1','2','3','4','5','6','7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']) for i in xrange(6)])
+			colors.append('#' + new_color)
+		color = [colors[i] for i in labels]
+	else:
+		color = "#0000FF"
+
+	# 1 - good, 0 - bad
+	# base_colors = ['r','g']
+	# colors = [base_colors[l] for l in image_labels]
+
+	ax.scatter(data[:,0], data[:,1], data[:,2], c=color)
+	plt.show()
