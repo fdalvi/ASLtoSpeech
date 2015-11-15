@@ -1,3 +1,4 @@
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -26,7 +27,7 @@ def plot_signals(signals, labels):
 
 	plt.show()
 
-def plot_signals_two_column(left_signals, right_signals, left_labels, right_labels):
+def plot_signals_two_column(left_signals, right_signals, left_labels, right_labels, title=None):
 	"""
 	Plots the various signals across time in two columns. This is useful if one
 	wants to compare signals or plot signals of different lengths.
@@ -43,16 +44,32 @@ def plot_signals_two_column(left_signals, right_signals, left_labels, right_labe
 	Returns
 		None
 	"""
+
+	mpl.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+	# mpl.rc('text', usetex=True)
+
 	subplot_rows = max([left_signals.shape[1], right_signals.shape[1]])
 	subplot_columns = 2
 
+	max_value = np.max([np.max(left_signals), np.max(right_signals)])
+	min_value = np.min([np.min(left_signals), np.min(right_signals)])
+
+	print max_value, min_value
+
 	f, plots = plt.subplots(subplot_rows, subplot_columns, sharex='col', sharey='row')
+	if title:
+		f.suptitle(title, fontsize=14)
+
 	for i in xrange(0, left_signals.shape[1]):
+		plots[i][0].set_ylim([np.min(left_signals[:, i]), np.max(left_signals[:, i])])
 		plots[i][0].plot(left_signals[:, i])
+		plots[i][0].grid(which='both')
 		plots[i][0].set_title(left_labels[i])
 
 	for i in xrange(0, right_signals.shape[1]):
+		plots[i][0].set_ylim([np.min(right_signals[:, i]), np.max(right_signals[:, i])])
 		plots[i][1].plot(right_signals[:, i])
+		plots[i][1].grid(which='both')
 		plots[i][1].set_title(right_labels[i])
 
 	plt.show()
