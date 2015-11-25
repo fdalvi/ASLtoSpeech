@@ -2,9 +2,10 @@ import numpy as np
 import util.analysis as analysis
 import util.io as io
 import util.preprocessing as preprocessing
+import keras
 
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation
+from keras.layers.core import Dense, MaxoutDense, Dropout, Activation
 from keras.optimizers import SGD
 from keras.regularizers import l2
 
@@ -40,13 +41,47 @@ def run_nn(quality='low'):
     flattened_Xtest = preprocessing.flatten_matrix(X_test)
 
     # fit neural network model
+    HIDDEN_LAYER_SIZE = y_train_one_hot.shape[1]
+    # HIDDEN_LAYER_SIZE = y_train_one_hot.shape[1]*2
+
+    ############ FAILED ##################
+    # HIDDEN_LAYER_SIZE = X_train.shape[1]
+    # 
+    ######################################
     nn_model = Sequential()
-    nn_model.add(Dense(y_train_one_hot.shape[1], input_dim=flattened_Xtrain.shape[1], init='uniform', activation="tanh"))
+
+    ####################################### MODELS #######################################
+    
+    ####################################### MODEL1 #######################################
+    # Training Error: 0.517945411562
+    # Testing Error: 0.778446115288
+    # Epochs: 200
+    # 
+    nn_model.add(Dense(HIDDEN_LAYER_SIZE, input_dim=flattened_Xtrain.shape[1], init='uniform', activation="tanh"))
+    nn_model.add(Dropout(0.2))
+    nn_model.add(Dense(y_train_one_hot.shape[1], init='uniform', activation="tanh"))
+    N_EPOCHS = 200
+    ####################################### MODEL1 #######################################
+
+    ####################################### MODEL2 #######################################
+    # Training Error: 0.
+    # Testing Error: 0.
+    # 
+    # nn_model.add(Dense(HIDDEN_LAYER_SIZE, input_dim=flattened_Xtrain.shape[1], init='uniform', activation="tanh"))
+    # nn_model.add(Dropout(0.2))
+    # nn_model.add(Dense(HIDDEN_LAYER_SIZE*10, activation="tanh", init='uniform'))
+    # nn_model.add(Dropout(0.3))
+    # nn_model.add(Dense(HIDDEN_LAYER_SIZE*2, activation="tanh", init='uniform'))
+    # nn_model.add(Dense(y_train_one_hot.shape[1], init='uniform', activation="tanh"))
+    ####################################### MODEL2 #######################################
+
+    
+    
 
     sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     nn_model.compile(loss='mean_squared_error', optimizer=sgd)
 
-    nn_model.fit(flattened_Xtrain, y_train_one_hot, nb_epoch=100)
+    nn_model.fit(flattened_Xtrain, y_train_one_hot, nb_epoch=N_EPOCHS)
     y_predict_train = nn_model.predict_classes(flattened_Xtrain)
     y_predict = nn_model.predict_classes(flattened_Xtest)
     # y_predict_one_hot = nn_model.predict(flattened_Xtest)

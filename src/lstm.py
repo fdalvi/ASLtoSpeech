@@ -46,9 +46,9 @@ def run_nn(quality='low'):
 	lstm_model = Sequential()
 	# lstm_model.add(Embedding(flattened_Xtrain.shape[1], 256, input_length=maxlen))
 	lstm_model.add(LSTM(input_dim=X_train.shape[2], output_dim=y_train_one_hot.shape[1], activation='tanh', inner_activation='hard_sigmoid'))
-	lstm_model.add(Dropout(0.5))
-	lstm_model.add(Dense(95))
-	lstm_model.add(Activation('softmax'))
+	# lstm_model.add(Dropout(0.5))
+	# lstm_model.add(Dense(95))
+	# lstm_model.add(Activation('softmax'))
 
 	lstm_model.compile(loss='binary_crossentropy', optimizer='rmsprop')
 
