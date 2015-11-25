@@ -5,43 +5,6 @@ import util.preprocessing as preprocessing
 from sklearn import svm
 from sklearn import metrics
 
-def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablation): 
-	"""
-	Runs analyses, including finding error, precision, recall, f1score, plotting
-	a confusion matrix, on the results of a particular model. Prints out the numeric
-	metrics and plots the graphical ones.
-
-	Args:
-		y_predict_train: 
-			the predicted labels on the training examples
-		y_train: 
-			true labels on training examples
-		y_predict: 
-			predicted labels on testing examples
-		y_test: 
-			true labels on testing examples
-		class_names: 
-			dictionary that contains the class name that corresponds
-			with the class index 
-
-	Returns: 
-		None
-	"""
-	# calculate metrics
-	_, training_error = analysis.output_error(y_predict_train, y_train)
-	(precision, recall, f1, _), testing_error = analysis.output_error(y_predict, y_test)
-	class_names_list = [class_names[index] for index in class_names.keys()]
-	if not ablation: 
-		cm = metrics.confusion_matrix(y_test, y_predict)
-		analysis.plot_confusion_matrix(cm, class_names_list)
-
-	# print out metrics
-	print 'Average Precision:', np.average(precision)
-	print 'Average Recall:', np.average(recall)
-	print 'Average F1:', np.average(f1)
-	print 'Training Error:', training_error
-	print 'Testing Error:', testing_error
-
 def run_svm(quality="high", ablation=False):
 	"""
 	Runs a simple SVM model with a linear kernel; first fits the model
@@ -69,7 +32,7 @@ def run_svm(quality="high", ablation=False):
 	y_predict_train = svm_model.predict(flattened_Xtrain)
 	y_predict = svm_model.predict(flattened_Xtest)
 
-	run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, False)
+	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, False)
 
 def run_ablation_svm(X, y, class_names, quality):
 	"""
@@ -110,7 +73,7 @@ def run_ablation_svm(X, y, class_names, quality):
 		y_predict = svm_model.predict(flattened_Xtest)
 		
 		print "running analyses on feature set without feature %s..." % feature
-		run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, True)
+		analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, True)
 
 		#true ablation tests
 		if len(feature_remove_list) > 1 and len(feature_remove_list) < len(feature_array): 
@@ -126,9 +89,9 @@ def run_ablation_svm(X, y, class_names, quality):
 			y_predict = svm_model.predict(flattened_Xtest)
 		
 			print "running analyses on feature set without the features %s..." % ", ".join(feature_remove_list)
-			run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, True)
+			analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, True)
 
 	
 
 if __name__ == '__main__':
-	run_svm(quality="low", ablation=True)
+	run_svm(quality="low", ablation=False)

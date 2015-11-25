@@ -1,3 +1,4 @@
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -26,7 +27,7 @@ def plot_signals(signals, labels):
 
 	plt.show()
 
-def plot_signals_two_column(left_signals, right_signals, left_labels, right_labels):
+def plot_signals_two_column(left_signals, right_signals, left_labels, right_labels, title=None):
 	"""
 	Plots the various signals across time in two columns. This is useful if one
 	wants to compare signals or plot signals of different lengths.
@@ -43,16 +44,32 @@ def plot_signals_two_column(left_signals, right_signals, left_labels, right_labe
 	Returns
 		None
 	"""
+
+	mpl.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+	# mpl.rc('text', usetex=True)
+
 	subplot_rows = max([left_signals.shape[1], right_signals.shape[1]])
 	subplot_columns = 2
 
+	max_value = np.max([np.max(left_signals), np.max(right_signals)])
+	min_value = np.min([np.min(left_signals), np.min(right_signals)])
+
+	print max_value, min_value
+
 	f, plots = plt.subplots(subplot_rows, subplot_columns, sharex='col', sharey='row')
+	if title:
+		f.suptitle(title, fontsize=14)
+
 	for i in xrange(0, left_signals.shape[1]):
+		plots[i][0].set_ylim([np.min(left_signals[:, i]), np.max(left_signals[:, i])])
 		plots[i][0].plot(left_signals[:, i])
+		plots[i][0].grid(which='both')
 		plots[i][0].set_title(left_labels[i])
 
 	for i in xrange(0, right_signals.shape[1]):
+		plots[i][0].set_ylim([np.min(right_signals[:, i]), np.max(right_signals[:, i])])
 		plots[i][1].plot(right_signals[:, i])
+		plots[i][1].grid(which='both')
 		plots[i][1].set_title(right_labels[i])
 
 	plt.show()
@@ -96,6 +113,43 @@ def output_error(y_predict, y_true):
 		(precision, recall, fscore, _), error 
 	"""
 	return metrics.precision_recall_fscore_support(y_true, y_predict), np.sum(y_predict != y_true) / float(y_predict.shape[0])
+
+def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablation=False): 
+	"""
+	Runs analyses, including finding error, precision, recall, f1score, plotting
+	a confusion matrix, on the results of a particular model. Prints out the numeric
+	metrics and plots the graphical ones.
+
+	Args:
+		y_predict_train: 
+			the predicted labels on the training examples
+		y_train: 
+			true labels on training examples
+		y_predict: 
+			predicted labels on testing examples
+		y_test: 
+			true labels on testing examples
+		class_names: 
+			dictionary that contains the class name that corresponds
+			with the class index 
+
+	Returns: 
+		None
+	"""
+	# calculate metrics
+	_, training_error = output_error(y_predict_train, y_train)
+	(precision, recall, f1, _), testing_error = output_error(y_predict, y_test)
+	class_names_list = [class_names[index] for index in class_names.keys()]
+	if not ablation: 
+		cm = metrics.confusion_matrix(y_test, y_predict)
+		plot_confusion_matrix(cm, class_names_list)
+
+	# print out metrics
+	print 'Average Precision:', np.average(precision)
+	print 'Average Recall:', np.average(recall)
+	print 'Average F1:', np.average(f1)
+	print 'Training Error:', training_error
+	print 'Testing Error:', testing_error
 
 def reduce_dimensions(data, n, random_state=None):
 	"""

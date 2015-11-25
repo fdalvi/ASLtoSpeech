@@ -11,7 +11,9 @@ def main():
 	analysis.plot_signals_two_column(data[class_names[y[0]]][0][:, 0:3],
 									 X[0, 0:3, :].T,
 										['Raw X', 'Raw Y', 'Raw Z'], 
-										['Fixed X', 'Fixed Y', 'Fixed Z'])
+										['Resampled X', 'Resampled Y', 'Resampled Z'])
+	
+	# analysis.plot_feature_space(preprocessing.flatten_matrix(X), y)
 
 if __name__ == '__main__':
 	main()
