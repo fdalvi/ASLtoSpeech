@@ -114,6 +114,43 @@ def output_error(y_predict, y_true):
 	"""
 	return metrics.precision_recall_fscore_support(y_true, y_predict), np.sum(y_predict != y_true) / float(y_predict.shape[0])
 
+def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablation=False): 
+	"""
+	Runs analyses, including finding error, precision, recall, f1score, plotting
+	a confusion matrix, on the results of a particular model. Prints out the numeric
+	metrics and plots the graphical ones.
+
+	Args:
+		y_predict_train: 
+			the predicted labels on the training examples
+		y_train: 
+			true labels on training examples
+		y_predict: 
+			predicted labels on testing examples
+		y_test: 
+			true labels on testing examples
+		class_names: 
+			dictionary that contains the class name that corresponds
+			with the class index 
+
+	Returns: 
+		None
+	"""
+	# calculate metrics
+	_, training_error = output_error(y_predict_train, y_train)
+	(precision, recall, f1, _), testing_error = output_error(y_predict, y_test)
+	class_names_list = [class_names[index] for index in class_names.keys()]
+	if not ablation: 
+		cm = metrics.confusion_matrix(y_test, y_predict)
+		plot_confusion_matrix(cm, class_names_list)
+
+	# print out metrics
+	print 'Average Precision:', np.average(precision)
+	print 'Average Recall:', np.average(recall)
+	print 'Average F1:', np.average(f1)
+	print 'Training Error:', training_error
+	print 'Testing Error:', testing_error
+
 def reduce_dimensions(data, n, random_state=None):
 	"""
 	Reduces the input data's dimension to 'n'.

@@ -33,7 +33,7 @@ def run_logreg(quality='high'):
 	y_predict = logreg_model.predict(flattened_Xtest)
 
 	# print metrics and confusion plot
-	baseline_svm.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names)
+	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names)
 
 if __name__ == '__main__':
-	run_logreg()
+	run_logreg('low')
