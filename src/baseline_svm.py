@@ -59,7 +59,7 @@ def run_svm(quality="high", ablation=False):
 	if ablation: 
 		run_ablation_svm(X, y, class_names, quality)
 		return 
-	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=True)	
+	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=False)	
 	flattened_Xtrain = preprocessing.flatten_matrix(X_train)
 	flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 
@@ -98,7 +98,7 @@ def run_ablation_svm(X, y, class_names, quality):
 		if len(feature_remove_list) > 1 and len(feature_remove_list) < len(feature_array): 
 			ablated_X2 = preprocessing.get_ablated_matrix(X, quality, feature_remove_list)
 		#create splits
-		X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(ablated_X1, y, test_size=0.3, shuffle=True)	
+		X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(ablated_X1, y, test_size=0.3, shuffle=False)	
 		flattened_Xtrain = preprocessing.flatten_matrix(X_train)
 		flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 
@@ -114,7 +114,7 @@ def run_ablation_svm(X, y, class_names, quality):
 
 		#true ablation tests
 		if len(feature_remove_list) > 1 and len(feature_remove_list) < len(feature_array): 
-			X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(ablated_X2, y, test_size=0.3, shuffle=True)	
+			X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(ablated_X2, y, test_size=0.3, shuffle=False)	
 			flattened_Xtrain = preprocessing.flatten_matrix(X_train)
 			flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 
