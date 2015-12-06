@@ -60,14 +60,18 @@ def plot_signals_two_column(left_signals, right_signals, left_labels, right_labe
 	if title:
 		f.suptitle(title, fontsize=14)
 
+	# for i in xrange(0, left_signals.shape[1]):
+	# 	miny = min(np.min(left_signals[:, i]), np.min(right_signals[:, i]))
+	# 	maxy = min(np.max(left_signals[:, i]), np.max(right_signals[:, i]))
+	# 	# plots[i][0].set_ylim([miny, maxy])
+		# plots[i][1].set_ylim([miny, maxy])
+
 	for i in xrange(0, left_signals.shape[1]):
-		plots[i][0].set_ylim([np.min(left_signals[:, i]), np.max(left_signals[:, i])])
 		plots[i][0].plot(left_signals[:, i])
 		plots[i][0].grid(which='both')
 		plots[i][0].set_title(left_labels[i])
 
 	for i in xrange(0, right_signals.shape[1]):
-		plots[i][0].set_ylim([np.min(right_signals[:, i]), np.max(right_signals[:, i])])
 		plots[i][1].plot(right_signals[:, i])
 		plots[i][1].grid(which='both')
 		plots[i][1].set_title(right_labels[i])

@@ -4,7 +4,7 @@ import util.io as io
 import util.preprocessing as preprocessing
 
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation
+from keras.layers.core import Dense, Dropout, Activation, TimeDistributedDense
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.regularizers import l2
@@ -36,21 +36,30 @@ def run_nn(quality='low'):
 	for i in range(y_test.shape[0]):
 		y_test_one_hot[i, y_test[i]] = 1
 
-
 	# flip last two axes
 	# tensor: samples x features x time
 	# tensor: samples x time x features
 	X_train = np.swapaxes(X_train, 1, 2)
 	X_test = np.swapaxes(X_test, 1, 2)
 
+	print X_train.shape
+	print y_train_one_hot.shape
+
 	lstm_model = Sequential()
+	HIDDEN_LAYER = 300
 	# lstm_model.add(Embedding(flattened_Xtrain.shape[1], 256, input_length=maxlen))
-	lstm_model.add(LSTM(input_dim=X_train.shape[2], output_dim=y_train_one_hot.shape[1], activation='tanh', inner_activation='hard_sigmoid'))
+	lstm_model.add(LSTM(output_dim=HIDDEN_LAYER, 
+						input_dim=X_train.shape[2], 
+						activation='tanh', 
+						inner_activation='hard_sigmoid',
+						return_sequences=False))
+	lstm_model.add(Dense(y_train.shape[0], activation='tanh'))
+	
 	# lstm_model.add(Dropout(0.5))
 	# lstm_model.add(Dense(95))
 	# lstm_model.add(Activation('softmax'))
 
-	lstm_model.compile(loss='binary_crossentropy', optimizer='rmsprop')
+	lstm_model.compile(loss='mean_squared_error', optimizer='rmsprop')
 
 	lstm_model.fit(X_train, y_train_one_hot, batch_size=16, nb_epoch=10)
 	# score = model.evaluate(X_test, Y_test, batch_size=16)
@@ -68,4 +77,4 @@ def run_nn(quality='low'):
 	print y_predict
 
 if __name__ == '__main__':
-	run_nn('low')
+	run_nn('high')

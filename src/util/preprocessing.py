@@ -93,6 +93,15 @@ def to_fixed_length(data, series_length, axis=0):
 
     return fixed_length_data
 
+def scale_spatially(data):
+    mins = np.amin(data, axis=2)
+    data = data - np.tile(mins, (data.shape[2],1,1)).swapaxes(0,2).swapaxes(0,1)
+
+    maxs = np.amax(data, axis=2) + 1e-15
+    data = np.divide(data, np.tile(maxs, (data.shape[2],1,1)).swapaxes(0,2).swapaxes(0,1))
+    
+    return data
+
 def create_data_tensor(data, series_length=57):
     """
     Converts data dictionary created by io.load_data into a 3D tensor.
