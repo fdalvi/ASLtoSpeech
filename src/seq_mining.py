@@ -3,24 +3,32 @@ import util.analysis as analysis
 import util.io as io
 import util.preprocessing as preprocessing
 import re
+import sys
 
-trends = ['D', 'S', 'I']
+##decreasing: -0.3 < x <= 0
+##very decreasing: -0.6 <= x <= -0.3 
+##very very decreasing: -0.6 >= x
+trends = ['WD', 'VD', 'D', 'S', 'I', 'VI', 'WI']
 
 def get_trend(idx):
 	return trends[idx]
 
 def get_trend_idx(trend):
-	if trend == 'D':
-		return 0
-	if trend == 'S':
-		return 1
-	if trend == 'I':
-		return 2
-	return -1
+	if trend in trends: 
+		return trends.index(trend)
+	return -1 
+	# if trend == 'D':
+	# 	return 0
+	# if trend == 'S':
+	# 	return 1
+	# if trend == 'I':
+	# 	return 2
+	# return -1
 
 def generate_one_pattern(D):
 	patterns = set()
 
+	##instead of iterating through all signals, go through only 3
 	for e in xrange(D.shape[0]):
 		for s in xrange(D.shape[1]):
 			for t in xrange(D.shape[2]):
@@ -78,7 +86,8 @@ def generate_k_patterns(patterns, k):
 
 	return new_patterns
 
-def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, prev_interval):
+def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, cur_window, prev_interval):
+	##base case 
 	if state_idx == len(states):
 		return True
 
@@ -90,9 +99,27 @@ def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, pre
 
 	match_idx = np.where(trend == T[signal, :])[0]
 
+	if cur_window != None: 
+		window_start, window_end = cur_window
+
+	##run through all matches in T 
 	for match in match_idx:
 		start, end = start_intervals[signal, match], end_intervals[signal, match]
 		recurse = True
+
+		##update window and check if it's within window size
+		if cur_window == None: 
+			window_start = end
+		else: 
+			if end < window_start: 
+				window_start = end
+
+		window_end = start 	
+
+		if window_end - window_start > w: 
+			recurse = False 
+
+		##check if pattern exists
 		if prev_interval == None:
 			recurse = True
 		else:
@@ -104,11 +131,12 @@ def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, pre
 					recurse = False
 			else:
 				# check o
-				if prev_end < start:
+				if prev_end < start or start < prev_start:
 					recurse = False
-		
+	
+		##recursive case
 		if recurse:
-			if pattern_exists_recurse(D, states, relations, state_idx+1, relation_idx+1, w, (start, end)):
+			if pattern_exists_recurse(D, states, relations, state_idx+1, relation_idx+1, w, (window_start, window_end),(start, end)):
 				return True
 
 	return False
@@ -117,12 +145,19 @@ def pattern_exists(D, P, w):
 	states = [P[m.start()-1:m.start()+2] for m in re.finditer(':', P)]
 	relations = [P[m.start()+1] for m in re.finditer('-', P)]
 
-	if pattern_exists_recurse(D, states, relations, 0, -1, w, None):
+	if pattern_exists_recurse(D, states, relations, 0, -1, w, None, None):
 		return 1
 	return 0
 
-def support(D, P, w):
-	return sum([pattern_exists((D[0][i,:,:], D[1][i,:,:], D[2][i,:,:]), P, w) for i in xrange(D[0].shape[0])])
+def support(D, P, w, minsup):
+	current_sum = 0
+	for i in xrange(D[0].shape[0]): 
+		current_sum += pattern_exists((D[0][i,:,:], D[1][i,:,:], D[2][i,:,:]), P, w) 
+		if current_sum >= minsup: 
+			break
+
+	return current_sum 	
+	# return sum([pattern_exists((D[0][i,:,:], D[1][i,:,:], D[2][i,:,:]), P, w) for i in xrange(D[0].shape[0])])
 
 def prune_patterns(D, patterns, minsup, w=20):
 	pruned_patterns = set()
@@ -130,32 +165,57 @@ def prune_patterns(D, patterns, minsup, w=20):
 	for i, pattern in enumerate(patterns):
 		if i % 10 == 0:
 			print 'Done with', i
-		if support(D, pattern, w) > minsup:
+		if support(D, pattern, w, minsup) >= minsup:
 			pruned_patterns.add(pattern)
 
 	return pruned_patterns
 
-def seg_mining():
+def seg_mining(use_all_signs):
 	# Constants
 	STEADY_THRESHOLD = 0.1
+	INCREASING_THRESHOLD = 0.3 
+	VERY_INCREASING_THRESHOLD = 0.6 
+	NUM_SIGNS = 1
+	NUM_SIGNALS = 3
+	EXAMPLES_PER_SIGN = 70
 
 	# Loading data
 	data = io.load_data(quality="low")
 	X, y, class_names = preprocessing.create_data_tensor(data)	
-	X = preprocessing.scale_spatially(X)
 
+	if not use_all_signs: 
+		X = preprocessing.scale_spatially(X)[:NUM_SIGNS * EXAMPLES_PER_SIGN,:NUM_SIGNALS,:]
+	else:  
+		X = preprocessing.scale_spatially(X)
+
+	# print X.shape 
+	# sys.exit()
 	# Computing fake slopes
 	dX = np.roll(X, -1, 2) - X
 	dX[:, :, -1] = dX[:, :, -2]
 
 	# Computing trends
-	I_idx = np.where(dX > STEADY_THRESHOLD)
-	D_idx = np.where(dX < -1*STEADY_THRESHOLD)
+	binary_I_idx = (INCREASING_THRESHOLD >= dX) & (dX > STEADY_THRESHOLD)
+	I_idx = np.where(binary_I_idx == 1)
+	binary_VI_idx = (VERY_INCREASING_THRESHOLD >= dX) & (dX > INCREASING_THRESHOLD)
+	VI_idx = np.where(binary_VI_idx == 1)
+	WI_idx = np.where(dX > VERY_INCREASING_THRESHOLD)
+	binary_D_idx = (-1*INCREASING_THRESHOLD <= dX) & (dX < -1*STEADY_THRESHOLD)
+	D_idx = np.where(binary_D_idx == 1)
+	binary_VD_idx = (-1*VERY_INCREASING_THRESHOLD <= dX) & (dX < -1*INCREASING_THRESHOLD)
+	VD_idx = np.where(binary_VD_idx == 1)
+	WD_idx = np.where(dX < -1*VERY_INCREASING_THRESHOLD)
 	S_idx = np.where(np.abs(dX) <= STEADY_THRESHOLD)
+	
 	trends = np.zeros(dX.shape, dtype=np.int8)
 	trends[I_idx] = get_trend_idx('I')
+	trends[VI_idx] = get_trend_idx('VI')
+	trends[WI_idx] = get_trend_idx('WI')
 	trends[S_idx] = get_trend_idx('S')
 	trends[D_idx] = get_trend_idx('D')
+	trends[VD_idx] = get_trend_idx('VD')
+	trends[WD_idx] = get_trend_idx('WD')
+
 
 	# print dX.shape, np.prod(dX.shape)
 	# print I_idx[0].shape, S_idx[0].shape, D_idx[0].shape
@@ -187,6 +247,13 @@ def seg_mining():
 	# print combined_trends[5, 3, :]
 	# print combined_trends_interval_start[5, 3, :]
 	# print combined_trends_interval_end[5, 3, :]
+	# NUM_SIGN = 3 
+	# NUM_EXAMPLES = 70
+	# idx = NUM_SIGN*NUM_EXAMPLES
+	# print trends[np.where(y==3)[0][0],3,:]
+	# print combined_trends[np.where(y==3)[0][0],3,:]
+	# print combined_trends_interval_start[np.where(y==3)[0][0],3,:]
+	# print combined_trends_interval_end[np.where(y==3)[0][0],3,:]
 
 	# support(combined_trends, None, 10)
 	print 'Generating one patterns.....'
@@ -203,9 +270,10 @@ def seg_mining():
 		# prune_patterns
 		print 'Pruning patterns...'
 		pruned_patterns = prune_patterns((combined_trends, combined_trends_interval_start, combined_trends_interval_end), 
-										  new_patterns, minsup=500, w=20)
+										  new_patterns, minsup=40, w=5)
 
 		print len(pruned_patterns)
+
 		# increment k
 		k += 1
 
@@ -216,7 +284,9 @@ def seg_mining():
 		patterns.append(pruned_patterns)
 		# patterns.append(new_patterns)
 
+	print "pruned patterns: "
+	print patterns 
 	# TODOS:
 	# 1: Try numerical error for combining
 if __name__ == '__main__':
-	seg_mining()
+	seg_mining(use_all_signs=False)
