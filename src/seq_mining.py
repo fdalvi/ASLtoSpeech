@@ -20,8 +20,8 @@ INCREASING_THRESHOLD = 0.3
 VERY_INCREASING_THRESHOLD = 0.6 
 NUM_SIGNS = 5
 NUM_SIGNALS = 3
-EXAMPLES_PER_SIGN = 70
-NUM_PATTERN_FEATURES = 2000
+EXAMPLES_PER_SIGN = 49
+NUM_PATTERN_FEATURES = 500
 
 trends = ['WD', 'VD', 'D', 'S', 'I', 'VI', 'WI']
 
@@ -39,6 +39,44 @@ def get_trend_idx(trend):
 	# if trend == 'I':
 	# 	return 2
 	# return -1
+
+def create_combined_trends(dX): 
+	I_idx = np.where(dX > STEADY_THRESHOLD)
+	S_idx = np.where(np.abs(dX) <= STEADY_THRESHOLD)
+	D_idx = np.where(dX < -1*STEADY_THRESHOLD)
+	
+	trends = np.zeros(dX.shape, dtype=np.int8)
+	trends[I_idx] = get_trend_idx('I')
+	trends[S_idx] = get_trend_idx('S')
+	trends[D_idx] = get_trend_idx('D')
+
+	# print dX.shape, np.prod(dX.shape)
+	# print I_idx[0].shape, S_idx[0].shape, D_idx[0].shape
+	# print np.where(dX > STEADY_THRESHOLD)
+	# print np.where(trends == 0)[0].shape, np.where(trends == 1)[0].shape, np.where(trends == 2)[0].shape
+	
+	# Combine trends
+	# Intervals are inclusive in nature
+	combined_trends = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+	combined_trends_interval_start = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+	combined_trends_interval_end = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+
+	for e in xrange(combined_trends.shape[0]):
+		for f in xrange(combined_trends.shape[1]):
+			combined_trend_idx = 0
+			combined_trends[e,f,0] = trends[e,f,0]
+			combined_trends_interval_start[e,f,0] = 0
+			for t in xrange(1, combined_trends.shape[2]):
+				if trends[e,f,t] != trends[e,f,t-1]:
+					# Set End time for previous trend
+					combined_trends_interval_end[e,f,combined_trend_idx] = t
+
+					# Start next trend
+					combined_trend_idx += 1
+					combined_trends[e,f,combined_trend_idx] = trends[e,f,t]
+					combined_trends_interval_start[e,f,combined_trend_idx] = t
+
+	return combined_trends, combined_trends_interval_start, combined_trends_interval_end
 
 def generate_one_pattern(D):
 	patterns = dict()
@@ -240,8 +278,8 @@ def chi_square(patterns, pattern_counts, all_pattern_supports):
 	return chi_square_statistics
 
 
-def construct_feature_vectors(ranked_patterns, D, w=20): 
-	new_feature_matrix = np.zeros((EXAMPLES_PER_SIGN * NUM_SIGNS, len(ranked_patterns)))
+def construct_feature_vectors(ranked_patterns, D, examples_per_sign, w=20): 
+	new_feature_matrix = np.zeros((examples_per_sign * NUM_SIGNS, len(ranked_patterns)))
 
 	for i in xrange(new_feature_matrix.shape[0]): 
 		new_feature_matrix[i,:] = np.array([pattern_exists((D[0][i,:,:], D[1][i,:,:], D[2][i,:,:]), P, w) for P in ranked_patterns])
@@ -258,8 +296,8 @@ def seg_mining(use_all_signs):
 		# TODO: change not break
 		X_train = preprocessing.scale_spatially(X_train)[:NUM_SIGNS * EXAMPLES_PER_SIGN,:NUM_SIGNALS,:]
 		y_train = y_train[:NUM_SIGNS * EXAMPLES_PER_SIGN]
-		X_test = preprocessing.scale_spatially(X_test)[:NUM_SIGNS * EXAMPLES_PER_SIGN,:NUM_SIGNALS,:]
-		y_test = y_test[:NUM_SIGNS * EXAMPLES_PER_SIGN]
+		X_test = preprocessing.scale_spatially(X_test)[:NUM_SIGNS * (70 - EXAMPLES_PER_SIGN),:NUM_SIGNALS,:]
+		y_test = y_test[:NUM_SIGNS * (70 - EXAMPLES_PER_SIGN)]
 	else:  
 		X_train = preprocessing.scale_spatially(X_train)
 		X_test = preprocessing.scale_spatially(X_test)
@@ -267,65 +305,71 @@ def seg_mining(use_all_signs):
 	# print X.shape 
 	# sys.exit()
 	# Computing fake slopes
-	dX = np.roll(X, -1, 2) - X
-	dX[:, :, -1] = dX[:, :, -2]
+	dX_train = np.roll(X_train, -1, 2) - X_train
+	dX_train[:, :, -1] = dX_train[:, :, -2]
+	dX_test = np.roll(X_test, -1, 2) - X_test
+	dX_test[:, :, -1] = dX_test[:, :, -2]
+
+	combined_trends, combined_trends_interval_start, combined_trends_interval_end = create_combined_trends(dX_train)
+	combined_trends_test, combined_trends_interval_start_test, combined_trends_interval_end_test = create_combined_trends(dX_test)
+
 
 	# Computing trends
-	# binary_I_idx = (INCREASING_THRESHOLD >= dX) & (dX > STEADY_THRESHOLD)
-	# I_idx = np.where(binary_I_idx == 1)
-	# binary_VI_idx = (VERY_INCREASING_THRESHOLD >= dX) & (dX > INCREASING_THRESHOLD)
-	# VI_idx = np.where(binary_VI_idx == 1)
-	# WI_idx = np.where(dX > VERY_INCREASING_THRESHOLD)
-	# binary_D_idx = (-1*INCREASING_THRESHOLD <= dX) & (dX < -1*STEADY_THRESHOLD)
-	# D_idx = np.where(binary_D_idx == 1)
-	# binary_VD_idx = (-1*VERY_INCREASING_THRESHOLD <= dX) & (dX < -1*INCREASING_THRESHOLD)
-	# VD_idx = np.where(binary_VD_idx == 1)
-	# WD_idx = np.where(dX < -1*VERY_INCREASING_THRESHOLD)
-	# S_idx = np.where(np.abs(dX) <= STEADY_THRESHOLD)
+	# binary_I_idx_train = (INCREASING_THRESHOLD >= dX_train) & (dX_train > STEADY_THRESHOLD)
+	# I_idx_train = np.where(binary_I_idx_train == 1)
+	# binary_VI_idx_train = (VERY_INCREASING_THRESHOLD >= dX_train) & (dX_train > INCREASING_THRESHOLD)
+	# VI_idx_train = np.where(binary_VI_idx_train == 1)
+	# WI_idx_train = np.where(dX_train > VERY_INCREASING_THRESHOLD)
+	# binary_D_idx_train = (-1*INCREASING_THRESHOLD <= dX_train) & (dX_train < -1*STEADY_THRESHOLD)
+	# D_idx_train = np.where(binary_D_idx_train == 1)
+	# binary_VD_idx_train = (-1*VERY_INCREASING_THRESHOLD <= dX_train) & (dX_train < -1*INCREASING_THRESHOLD)
+	# VD_idx_train = np.where(binary_VD_idx_train == 1)
+	# WD_idx_train = np.where(dX_train < -1*VERY_INCREASING_THRESHOLD)
+	# S_idx_train = np.where(np.abs(dX_train) <= STEADY_THRESHOLD)
 	
-	# trends = np.zeros(dX.shape, dtype=np.int8)
-	# trends[I_idx] = get_trend_idx('I')
-	# trends[VI_idx] = get_trend_idx('VI')
-	# trends[WI_idx] = get_trend_idx('WI')
-	# trends[S_idx] = get_trend_idx('S')
-	# trends[D_idx] = get_trend_idx('D')
-	# trends[VD_idx] = get_trend_idx('VD')
-	# trends[WD_idx] = get_trend_idx('WD')
+	# trends = np.zeros(dX_train.shape, dtype=np.int8)
+	# trends[I_idx_train] = get_trend_idx_train('I')
+	# trends[VI_idx_train] = get_trend_idx_train('VI')
+	# trends[WI_idx_train] = get_trend_idx_train('WI')
+	# trends[S_idx_train] = get_trend_idx_train('S')
+	# trends[D_idx_train] = get_trend_idx_train('D')
+	# trends[VD_idx_train] = get_trend_idx_train('VD')
+	# trends[WD_idx_train] = get_trend_idx_train('WD')
 	
-	I_idx = np.where(dX > STEADY_THRESHOLD)
-	S_idx = np.where(np.abs(dX) <= STEADY_THRESHOLD)
-	D_idx = np.where(dX < -1*STEADY_THRESHOLD)
+	# I_idx_train = np.where(dX_train > STEADY_THRESHOLD)
+	# S_idx_train = np.where(np.abs(dX_train) <= STEADY_THRESHOLD)
+	# D_idx_train = np.where(dX_train < -1*STEADY_THRESHOLD)
 	
-	trends = np.zeros(dX.shape, dtype=np.int8)
-	trends[I_idx] = get_trend_idx('I')
-	trends[S_idx] = get_trend_idx('S')
-	trends[D_idx] = get_trend_idx('D')
+	# trends = np.zeros(dX_train.shape, dtype=np.int8)
+	# trends[I_idx_train] = get_trend_idx('I')
+	# trends[S_idx_train] = get_trend_idx('S')
+	# trends[D_idx_train] = get_trend_idx('D')
 
-	# print dX.shape, np.prod(dX.shape)
-	# print I_idx[0].shape, S_idx[0].shape, D_idx[0].shape
-	# print np.where(dX > STEADY_THRESHOLD)
-	# print np.where(trends == 0)[0].shape, np.where(trends == 1)[0].shape, np.where(trends == 2)[0].shape
+	# # print dX_train.shape, np.prod(dX_train.shape)
+	# # print I_idx_train[0].shape, S_idx_train[0].shape, D_idx_train[0].shape
+	# # print np.where(dX_train > STEADY_THRESHOLD)
+	# # print np.where(trends == 0)[0].shape, np.where(trends == 1)[0].shape, np.where(trends == 2)[0].shape
 	
-	# Combine trends
-	# Intervals are inclusive in nature
-	combined_trends = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
-	combined_trends_interval_start = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
-	combined_trends_interval_end = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+	# # Combine trends
+	# # Intervals are inclusive in nature
+	# combined_trends = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+	# combined_trends_interval_start = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+	# combined_trends_interval_end = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
 
-	for e in xrange(combined_trends.shape[0]):
-		for f in xrange(combined_trends.shape[1]):
-			combined_trend_idx = 0
-			combined_trends[e,f,0] = trends[e,f,0]
-			combined_trends_interval_start[e,f,0] = 0
-			for t in xrange(1, combined_trends.shape[2]):
-				if trends[e,f,t] != trends[e,f,t-1]:
-					# Set End time for previous trend
-					combined_trends_interval_end[e,f,combined_trend_idx] = t
+	# for e in xrange(combined_trends.shape[0]):
+	# 	for f in xrange(combined_trends.shape[1]):
+	# 		combined_trend_idx = 0
+	# 		combined_trends[e,f,0] = trends[e,f,0]
+	# 		combined_trends_interval_start[e,f,0] = 0
+	# 		for t in xrange(1, combined_trends.shape[2]):
+	# 			if trends[e,f,t] != trends[e,f,t-1]:
+	# 				# Set End time for previous trend
+	# 				combined_trends_interval_end[e,f,combined_trend_idx] = t
 
-					# Start next trend
-					combined_trend_idx += 1
-					combined_trends[e,f,combined_trend_idx] = trends[e,f,t]
-					combined_trends_interval_start[e,f,combined_trend_idx] = t
+	# 				# Start next trend
+	# 				combined_trend_idx += 1
+	# 				combined_trends[e,f,combined_trend_idx] = trends[e,f,t]
+	# 				combined_trends_interval_start[e,f,combined_trend_idx] = t
 
 	summed = np.sum(combined_trends == get_trend_idx('D'), 2)
 	print summed
@@ -359,7 +403,7 @@ def seg_mining(use_all_signs):
 		total_time = 0
 		patterns[i] = [one_patterns]
 		all_pattern_supports[i] = [None]
-		while True and k <= 10:
+		while True and k <= 15:
 			# generate_k_patterns
 			print 'Generating patterns...'
 
@@ -378,7 +422,7 @@ def seg_mining(use_all_signs):
 			combined_trends_interval_end_sign = combined_trends_interval_end[i*EXAMPLES_PER_SIGN:(i+1)*EXAMPLES_PER_SIGN,:,:]
 			
 			pruned_patterns, pattern_supports = prune_patterns((combined_trends_sign, combined_trends_interval_start_sign, combined_trends_interval_end_sign), 
-											  new_patterns, minsup=20, w=5)
+											  new_patterns, minsup=30, w=10)
 
 			all_pattern_supports[i].append(pattern_supports)
 			for pattern in pattern_supports: 
@@ -404,21 +448,34 @@ def seg_mining(use_all_signs):
 
 	# cut some ranked_patterns out
 
-	X_new = construct_feature_vectors(ranked_patterns, (combined_trends, combined_trends_interval_start, combined_trends_interval_end))
-
+	X_train_new = construct_feature_vectors(ranked_patterns, \
+		(combined_trends, combined_trends_interval_start, combined_trends_interval_end), EXAMPLES_PER_SIGN)
+	X_test_new = construct_feature_vectors(ranked_patterns, \
+		(combined_trends_test, combined_trends_interval_start_test, combined_trends_interval_end_test), 70 - EXAMPLES_PER_SIGN)
+	
 	# print ranked_patterns[:NUM_PATTERN_FEATURES]
 	# print len(ranked_patterns)
 
-	print X_new
-	print y
-	y = y[:NUM_SIGNS * EXAMPLES_PER_SIGN]
+	print X_train_new
+	print y_train
+	y_train = y_train[:NUM_SIGNS * EXAMPLES_PER_SIGN]
 
 	svm_model = svm.SVC(kernel="linear", decision_function_shape='ovr')
-	svm_model.fit(X_new, y)
-	y_predict_train = svm_model.predict(X_new)
+	svm_model.fit(X_train_new, y_train)
+	y_predict_train = svm_model.predict(X_train_new)
+	y_predict = svm_model.predict(X_test_new)
 
-	_, error = analysis.output_error(y_predict_train, y)
-	print error
+	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names)
+	# print y_predict_train.shape 
+	# print y_train.shape 
+	# print y_predict.shape 
+	# print y_test.shape
+	# _, training_error = analysis.output_error(y_predict_train, y_train)
+	# _, testing_error = analysis.output_error(y_predict, y_test)
+	# print "training error: ", str(training_error)
+	# print "testing error: ", str(testing_error)
+	
+	# print error
 
 
 
