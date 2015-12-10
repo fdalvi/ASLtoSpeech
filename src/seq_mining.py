@@ -18,27 +18,26 @@ from collections import Counter
 STEADY_THRESHOLD = 0.1
 INCREASING_THRESHOLD = 0.3 
 VERY_INCREASING_THRESHOLD = 0.6 
-NUM_SIGNS = 5
-NUM_SIGNALS = 3
-EXAMPLES_PER_SIGN = 49
+WINDOW_SIZE = 10
+MIN_SUPPORT = 20
+K = 15
 NUM_PATTERN_FEATURES = 500
+NUM_SIGNS = 5
+NUM_SIGNALS = 8
+EXAMPLES_PER_SIGN = 49
 
 trends = ['WD', 'VD', 'D', 'S', 'I', 'VI', 'WI']
 
+
 def get_trend(idx):
 	return trends[idx]
+
 
 def get_trend_idx(trend):
 	if trend in trends: 
 		return trends.index(trend)
 	return -1 
-	# if trend == 'D':
-	# 	return 0
-	# if trend == 'S':
-	# 	return 1
-	# if trend == 'I':
-	# 	return 2
-	# return -1
+
 
 def create_combined_trends(dX): 
 	I_idx = np.where(dX > STEADY_THRESHOLD)
@@ -49,11 +48,6 @@ def create_combined_trends(dX):
 	trends[I_idx] = get_trend_idx('I')
 	trends[S_idx] = get_trend_idx('S')
 	trends[D_idx] = get_trend_idx('D')
-
-	# print dX.shape, np.prod(dX.shape)
-	# print I_idx[0].shape, S_idx[0].shape, D_idx[0].shape
-	# print np.where(dX > STEADY_THRESHOLD)
-	# print np.where(trends == 0)[0].shape, np.where(trends == 1)[0].shape, np.where(trends == 2)[0].shape
 	
 	# Combine trends
 	# Intervals are inclusive in nature
@@ -78,6 +72,7 @@ def create_combined_trends(dX):
 
 	return combined_trends, combined_trends_interval_start, combined_trends_interval_end
 
+
 def generate_one_pattern(D):
 	patterns = dict()
 
@@ -92,6 +87,7 @@ def generate_one_pattern(D):
 				idx += 1
 
 	return patterns
+
 
 def generate_k_patterns(patterns, k, total_time):
 	new_patterns = dict()
@@ -153,7 +149,7 @@ def generate_k_patterns(patterns, k, total_time):
 
 					if signal_1 != signal_2:
 						# Generate 'overlap'
-						new_patterns[pattern_1 + '2-o;' + suffix_2] = patterns[pattern_1]
+						new_patterns[pattern_1 + '-o;' + suffix_2] = patterns[pattern_1]
 						if not (relation_1 == 'o' and relation_2 == 'b'):
 							new_patterns[pattern_2 + '-o;' + suffix_1] = patterns[pattern_2]
 
@@ -162,6 +158,7 @@ def generate_k_patterns(patterns, k, total_time):
 						new_patterns[pattern_2 + '-b;' + suffix_1] = patterns[pattern_2]
 
 	return new_patterns, total_time
+
 
 def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, cur_window, prev_interval):
 	##base case 
@@ -217,6 +214,7 @@ def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, cur
 
 	return False
 
+
 def pattern_exists(D, P, w):
 	states = [P[m.start()-1:m.start()+2] for m in re.finditer(':', P)]
 	relations = [P[m.start()+1] for m in re.finditer('-', P)]
@@ -224,6 +222,7 @@ def pattern_exists(D, P, w):
 	if pattern_exists_recurse(D, states, relations, 0, -1, w, None, None):
 		return 1
 	return 0
+
 
 def support(D, P, w, minsup):
 	current_sum = 0
@@ -235,12 +234,13 @@ def support(D, P, w, minsup):
 	return current_sum 	
 	# return sum([pattern_exists((D[0][i,:,:], D[1][i,:,:], D[2][i,:,:]), P, w) for i in xrange(D[0].shape[0])])
 
+
 def prune_patterns(D, patterns, minsup, w=20):
 	pruned_patterns = dict()
 
 	supports = dict()
 	for i, pattern in enumerate(patterns):
-		if i % int(0.05*len(patterns)) == 0:
+		if i % (int(0.05*len(patterns)) + 1) == 0:
 			sys.stdout.write('=')
 			sys.stdout.flush()
 
@@ -285,6 +285,7 @@ def construct_feature_vectors(ranked_patterns, D, examples_per_sign, w=20):
 		new_feature_matrix[i,:] = np.array([pattern_exists((D[0][i,:,:], D[1][i,:,:], D[2][i,:,:]), P, w) for P in ranked_patterns])
 
 	return new_feature_matrix
+
 
 def seg_mining(use_all_signs):
 	# Loading data
@@ -371,10 +372,6 @@ def seg_mining(use_all_signs):
 	# 				combined_trends[e,f,combined_trend_idx] = trends[e,f,t]
 	# 				combined_trends_interval_start[e,f,combined_trend_idx] = t
 
-	summed = np.sum(combined_trends == get_trend_idx('D'), 2)
-	print summed
-	print np.unravel_index(summed.argmax(), summed.shape)
-
 	# print trends[5, 3, :]
 	# print combined_trends[5, 3, :]
 	# print combined_trends_interval_start[5, 3, :]
@@ -392,6 +389,7 @@ def seg_mining(use_all_signs):
 	pattern_counts = Counter()
 	all_pattern_supports = [None] * NUM_SIGNS
 	for i in xrange(NUM_SIGNS): 
+		print 'For sign %d...' % i 
 		print 'Generating one patterns.....'
 		one_patterns = generate_one_pattern(combined_trends)
 		# support((combined_trends, combined_trends_interval_start, combined_trends_interval_end), 
@@ -403,18 +401,21 @@ def seg_mining(use_all_signs):
 		total_time = 0
 		patterns[i] = [one_patterns]
 		all_pattern_supports[i] = [None]
-		while True and k <= 15:
+		while True and k <= K:
 			# generate_k_patterns
 			print 'Generating patterns...'
 
 			generation_start_time = time.time()
 			total_time = 0
 			new_patterns, total_time = generate_k_patterns(patterns[i][k-2], k, total_time)
+
 			generation_end_time = time.time()
 			print "k:", k, " -> New patterns:", len(new_patterns)
 
 			print "Total time for generation: ", (generation_end_time-generation_start_time)
 			print "Total time for comparison: ", (total_time)
+
+			if len(new_patterns) == 0: break
 			# prune_patterns
 			print 'Pruning patterns...'
 			combined_trends_sign = combined_trends[i*EXAMPLES_PER_SIGN:(i+1)*EXAMPLES_PER_SIGN,:,:]
@@ -422,7 +423,7 @@ def seg_mining(use_all_signs):
 			combined_trends_interval_end_sign = combined_trends_interval_end[i*EXAMPLES_PER_SIGN:(i+1)*EXAMPLES_PER_SIGN,:,:]
 			
 			pruned_patterns, pattern_supports = prune_patterns((combined_trends_sign, combined_trends_interval_start_sign, combined_trends_interval_end_sign), 
-											  new_patterns, minsup=30, w=10)
+											  new_patterns, MIN_SUPPORT, WINDOW_SIZE)
 
 			all_pattern_supports[i].append(pattern_supports)
 			for pattern in pattern_supports: 
@@ -435,14 +436,14 @@ def seg_mining(use_all_signs):
 			# If no k patterns, break
 			if len(pruned_patterns) == 0:
 				break
-			print pruned_patterns.keys()[0]
+			#print pruned_patterns.keys()[0]
 
 			patterns[i].append(pruned_patterns)
 			# patterns.append(new_patterns)
 
-		print "pruned patterns: "
-		print patterns[i] 
-		print all_pattern_supports[i]
+		# print "pruned patterns: "
+		# print patterns[i] 
+		# print all_pattern_supports[i]
 
 	ranked_patterns = chi_square(patterns, pattern_counts, all_pattern_supports)[:NUM_PATTERN_FEATURES]
 
@@ -456,8 +457,8 @@ def seg_mining(use_all_signs):
 	# print ranked_patterns[:NUM_PATTERN_FEATURES]
 	# print len(ranked_patterns)
 
-	print X_train_new
-	print y_train
+	# print X_train_new
+	# print y_train
 	y_train = y_train[:NUM_SIGNS * EXAMPLES_PER_SIGN]
 
 	svm_model = svm.SVC(kernel="linear", decision_function_shape='ovr')
