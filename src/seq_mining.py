@@ -101,7 +101,7 @@ def generate_k_patterns(patterns, k, total_time):
 
 					if signal_1 != signal_2:
 						# Generate 'overlap'
-						new_patterns[pattern_1 + '-o;' + suffix_2] = patterns[pattern_1]
+						new_patterns[pattern_1 + '2-o;' + suffix_2] = patterns[pattern_1]
 						if not (relation_1 == 'o' and relation_2 == 'b'):
 							new_patterns[pattern_2 + '-o;' + suffix_1] = patterns[pattern_2]
 
@@ -115,6 +115,11 @@ def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, cur
 	##base case 
 	if state_idx == len(states):
 		return True
+	
+
+	# if state_idx + 1 != len(states):
+	# 	print states[state_idx+1]
+
 
 	T, start_intervals, end_intervals = D
 
@@ -148,7 +153,9 @@ def pattern_exists_recurse(D, states, relations, state_idx, relation_idx, w, cur
 		if prev_interval == None:
 			recurse = True
 		else:
+			#print states[state_idx], relations[relation_idx]
 			prev_start, prev_end = prev_interval
+			#print "(%d,%d) -> (%d,%d)"%(prev_start, prev_end, start, end)
 
 			# check b
 			if relations[relation_idx] == 'b':
@@ -274,7 +281,7 @@ def seg_mining(use_all_signs):
 			for t in xrange(1, combined_trends.shape[2]):
 				if trends[e,f,t] != trends[e,f,t-1]:
 					# Set End time for previous trend
-					combined_trends_interval_end[e,f,combined_trend_idx] = t-1
+					combined_trends_interval_end[e,f,combined_trend_idx] = t
 
 					# Start next trend
 					combined_trend_idx += 1
@@ -299,6 +306,10 @@ def seg_mining(use_all_signs):
 	# support(combined_trends, None, 10)
 	print 'Generating one patterns.....'
 	one_patterns = generate_one_pattern(combined_trends)
+	# support((combined_trends, combined_trends_interval_start, combined_trends_interval_end), 
+	# 	'S:1-o;S:2-b;D:1-o;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1-b;D:1', 
+	# 	w=5, minsup=20)
+	# sys.exit()
 
 	k = 2
 	total_time = 0
