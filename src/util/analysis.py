@@ -23,7 +23,7 @@ def plot_signals(signals, labels):
 	f, plots = plt.subplots(signals.shape[1], 1, sharex='col', sharey='row')
 
 	for i in xrange(0, signals.shape[1]):
-		plots[i].plot(xrange(1, signals[:,i].size+1), signals[:,i])
+		plots[i].plot(xrange(1, signals[:,i].size+1), signals[:,i], linewidth=3)
 
 	plt.show()
 

@@ -30,8 +30,8 @@ def main():
 	NUM = 3
 	C1 = 0
 	C2 = 3
-	d1 = X[np.where(y==C1)[0][0:NUM], 3, :].T
-	d2 = X[np.where(y==C2)[0][0:NUM], 3, :].T
+	d1 = X[np.where(y==C1)[0][0:NUM], 2, :].T
+	d2 = X[np.where(y==C2)[0][0:NUM], 2, :].T
 
 	d1p = np.roll(d1, -1, 0) - d1
 	# d1p = d1p[0:d1.shape[0]-1]
@@ -48,10 +48,16 @@ def main():
 
 	print np.concatenate((d1, d1p), 1).shape
 	
-	analysis.plot_signals_two_column(np.concatenate((d1, d1p), 1),
-									 np.concatenate((d2, d2p), 1),
-									labels1,
-									labels2)
+	# analysis.plot_signals_two_column(np.concatenate((d1, d1p), 1),
+	# 								 np.concatenate((d2, d2p), 1),
+	# 								labels1,
+	# 								labels2)
+
+
+	print class_names[4]
+	d2 = X[np.where(y==4)[0][0:2], 2, :].T
+
+	analysis.plot_signals(d2, labels2)
 
 	# analysis.plot_signals_two_column(d1p,
 	# 								 d2p,
