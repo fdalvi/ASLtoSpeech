@@ -15,12 +15,12 @@ from collections import Counter
 ##very very decreasing: -0.6 >= x
 
 # Constants
-STEADY_THRESHOLD = 0.1
-INCREASING_THRESHOLD = 0.3 
-VERY_INCREASING_THRESHOLD = 0.6 
+STEADY_THRESHOLD = 0.2
+# INCREASING_THRESHOLD = 0.3 
+# VERY_INCREASING_THRESHOLD = 0.6 
 WINDOW_SIZE = 10
 MIN_SUPPORT = 20
-K = 15
+K = 10
 NUM_PATTERN_FEATURES = 500
 NUM_SIGNS = 5
 NUM_SIGNALS = 8
@@ -258,7 +258,7 @@ def chi_square(patterns, pattern_counts, all_pattern_supports):
 	##TODO: Convert to floats!!!!
 	chi_square_statistics = Counter()
 	num_instances = EXAMPLES_PER_SIGN * NUM_SIGNS
-	print patterns
+	
 	for i in xrange(len(patterns)): 
 		for iteration_number, pattern_dict in enumerate(patterns[i]):
 			if all_pattern_supports[i][iteration_number] is None:
@@ -389,6 +389,7 @@ def seg_mining(use_all_signs):
 	pattern_counts = Counter()
 	all_pattern_supports = [None] * NUM_SIGNS
 	for i in xrange(NUM_SIGNS): 
+		print ''
 		print 'For sign %d...' % i 
 		print 'Generating one patterns.....'
 		one_patterns = generate_one_pattern(combined_trends)
@@ -461,7 +462,7 @@ def seg_mining(use_all_signs):
 	# print y_train
 	y_train = y_train[:NUM_SIGNS * EXAMPLES_PER_SIGN]
 
-	svm_model = svm.SVC(kernel="linear", decision_function_shape='ovr')
+	svm_model = svm.SVC(C=.1, kernel="linear", decision_function_shape='ovr')
 	svm_model.fit(X_train_new, y_train)
 	y_predict_train = svm_model.predict(X_train_new)
 	y_predict = svm_model.predict(X_test_new)
