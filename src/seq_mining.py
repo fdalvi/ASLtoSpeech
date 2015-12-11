@@ -17,6 +17,7 @@ from collections import Counter
 # Constants
 # INCREASING_THRESHOLD = 0.3 
 # VERY_INCREASING_THRESHOLD = 0.6 
+
 STEADY_THRESHOLD = 0.1
 WINDOW_SIZE = 5
 MIN_SUPPORT = 20
@@ -41,9 +42,12 @@ def get_trend_idx(trend):
 
 
 def create_combined_trends(dX): 
-	I_idx = np.where(dX > STEADY_THRESHOLD)
-	S_idx = np.where(np.abs(dX) <= STEADY_THRESHOLD)
-	D_idx = np.where(dX < -1*STEADY_THRESHOLD)
+	# I_idx = np.where(dX > STEADY_THRESHOLD)
+	# S_idx = np.where(np.abs(dX) <= STEADY_THRESHOLD)
+	# D_idx = np.where(dX < -1*STEADY_THRESHOLD)
+	I_idx = np.where(dX > 0.5+STEADY_THRESHOLD)
+	S_idx = np.where(np.abs(dX-0.5) <= STEADY_THRESHOLD)
+	D_idx = np.where(dX < 0.5-STEADY_THRESHOLD)
 	
 	trends = np.zeros(dX.shape, dtype=np.int8)
 	trends[I_idx] = get_trend_idx('I')
