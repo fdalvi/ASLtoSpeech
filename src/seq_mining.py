@@ -15,16 +15,17 @@ from collections import Counter
 ##very very decreasing: -0.6 >= x
 
 # Constants
-STEADY_THRESHOLD = 0.2
 # INCREASING_THRESHOLD = 0.3 
 # VERY_INCREASING_THRESHOLD = 0.6 
-WINDOW_SIZE = 10
+STEADY_THRESHOLD = 0.1
+WINDOW_SIZE = 5
 MIN_SUPPORT = 20
-K = 10
+K = 5
 NUM_PATTERN_FEATURES = 500
 NUM_SIGNS = 5
 NUM_SIGNALS = 8
 EXAMPLES_PER_SIGN = 49
+PENALTY = 0.1
 
 trends = ['WD', 'VD', 'D', 'S', 'I', 'VI', 'WI']
 
@@ -460,7 +461,6 @@ def seg_mining(use_all_signs):
 
 	# print X_train_new
 	# print y_train
-	y_train = y_train[:NUM_SIGNS * EXAMPLES_PER_SIGN]
 
 	svm_model = svm.SVC(C=.1, kernel="linear", decision_function_shape='ovr')
 	svm_model.fit(X_train_new, y_train)
