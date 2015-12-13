@@ -118,7 +118,7 @@ def output_error(y_predict, y_true):
 	"""
 	return metrics.precision_recall_fscore_support(y_true, y_predict), np.sum(y_predict != y_true) / float(y_predict.shape[0])
 
-def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablation=False): 
+def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablation=False, confusion=True): 
 	"""
 	Runs analyses, including finding error, precision, recall, f1score, plotting
 	a confusion matrix, on the results of a particular model. Prints out the numeric
@@ -145,8 +145,9 @@ def run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablat
 	(precision, recall, f1, _), testing_error = output_error(y_predict, y_test)
 	class_names_list = [class_names[index] for index in class_names.keys()]
 	if not ablation: 
-		cm = metrics.confusion_matrix(y_test, y_predict)
-		plot_confusion_matrix(cm, class_names_list)
+		if confusion:
+			cm = metrics.confusion_matrix(y_test, y_predict)
+			plot_confusion_matrix(cm, class_names_list)
 
 	# print out metrics
 	print 'Average Precision:', np.average(precision)

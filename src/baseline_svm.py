@@ -5,7 +5,7 @@ import util.preprocessing as preprocessing
 from sklearn import svm
 from sklearn import metrics
 
-def run_svm(quality="high", ablation=False):
+def run_svm(quality="high", ablation=False, concat=True):
 	"""
 	Runs a simple SVM model with a linear kernel; first fits the model
 	on the training data (70 percent of the total data) and tests on 
@@ -22,17 +22,47 @@ def run_svm(quality="high", ablation=False):
 	if ablation: 
 		run_ablation_svm(X, y, class_names, quality)
 		return 
-	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=False)	
+	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=False)
+
 	flattened_Xtrain = preprocessing.flatten_matrix(X_train)
 	flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 
+	if concat:
+		X_train_400 = np.load('../data/seq_mining_features/k_2-w_2/X_train-400.npy')
+		X_test_400 = np.load('../data/seq_mining_features/k_2-w_2/X_test-400.npy')
+		y_train_400 = np.load('../data/seq_mining_features/k_2-w_2/y_train-400.npy')
+		y_test_400 = np.load('../data/seq_mining_features/k_2-w_2/y_test-400.npy')
+
+		print X_train_400.shape, y_train_400.shape
+		print flattened_Xtrain.shape, y_train.shape
+		print '-----------'
+		print X_test_400.shape, y_test_400.shape
+		print flattened_Xtest.shape, y_test.shape
+
+		flattened_Xtrain_concatenated = np.hstack((flattened_Xtrain, X_train_400[:, 0:75]))
+		flattened_Xtest_concatenated = np.hstack((flattened_Xtest, X_test_400[:, 0:75]))
+
+		print '-----------'
+		print flattened_Xtrain.shape, y_train.shape
+		print flattened_Xtest.shape, y_test.shape
+
+	C = 0.01
 	# fit svm model
-	svm_model = svm.SVC(kernel="linear", decision_function_shape='ovr')
+	svm_model = svm.SVC(kernel="linear", C=C, decision_function_shape='ovr')
 	svm_model.fit(flattened_Xtrain, y_train)
 	y_predict_train = svm_model.predict(flattened_Xtrain)
 	y_predict = svm_model.predict(flattened_Xtest)
 
-	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, False)
+	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablation=False, confusion=False)
+
+	print '-----------==================-----------'
+	svm_model = svm.SVC(kernel="linear", C=C, decision_function_shape='ovr')
+	svm_model.fit(flattened_Xtrain_concatenated, y_train)
+	y_predict_train = svm_model.predict(flattened_Xtrain_concatenated)
+	y_predict = svm_model.predict(flattened_Xtest_concatenated)
+
+	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, ablation=False, confusion=False)
+	print '-----------==================-----------'
 
 def run_ablation_svm(X, y, class_names, quality):
 	"""
@@ -61,7 +91,7 @@ def run_ablation_svm(X, y, class_names, quality):
 		if len(feature_remove_list) > 1 and len(feature_remove_list) < len(feature_array): 
 			ablated_X2 = preprocessing.get_ablated_matrix(X, quality, feature_remove_list)
 		#create splits
-		X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(ablated_X1, y, test_size=0.3, shuffle=False)	
+		X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(ablated_X1, y, test_size=0.3, shuffle=True)	
 		flattened_Xtrain = preprocessing.flatten_matrix(X_train)
 		flattened_Xtest = preprocessing.flatten_matrix(X_test)	
 

@@ -11,15 +11,16 @@ from sklearn import svm
 from collections import Counter
 
 from threading import Thread
+#2	20	2	400	95	8	0.01
 STEADY_THRESHOLD = 0.1
-WINDOW_SIZE = 5
+WINDOW_SIZE = 2
 MIN_SUPPORT = 20
-K = 5
-NUM_PATTERN_FEATURES = 500
-NUM_SIGNS = 5
+K = 2
+NUM_PATTERN_FEATURES = 400
+NUM_SIGNS = 95
 NUM_SIGNALS = 8
 EXAMPLES_PER_SIGN = 49
-PENALTY = 0.1
+PENALTY = 0.01
 
 def process_sign(i, combined_trends, combined_trends_interval_start, combined_trends_interval_end, patterns, pattern_counts, all_pattern_supports):
 	print ''
@@ -77,6 +78,11 @@ def seg_mining(use_all_signs):
 	X, y, class_names = preprocessing.create_data_tensor(data)	
 	X_train, y_train, X_test, y_test = preprocessing.create_train_test_split(X, y, test_size=0.3, shuffle=False)
 
+	# for class_idx in np.unique(y):
+	# 	print class_names[class_idx], np.where(class_idx == y)[0].shape[0]
+	# import sys
+	# sys.exit(1)
+
 	if not use_all_signs: 
 		# TODO: change not break
 		X_train = preprocessing.scale_spatially(X_train)[:NUM_SIGNS * EXAMPLES_PER_SIGN,:NUM_SIGNALS,:]
@@ -96,8 +102,8 @@ def seg_mining(use_all_signs):
 	# dX_test = np.roll(X_test, -1, 2) - X_test
 	# dX_test[:, :, -1] = dX_test[:, :, -2]
 
-	combined_trends, combined_trends_interval_start, combined_trends_interval_end = sq.create_combined_trends(dX_train)
-	combined_trends_test, combined_trends_interval_start_test, combined_trends_interval_end_test = sq.create_combined_trends(dX_test)
+	combined_trends, combined_trends_interval_start, combined_trends_interval_end = sq.create_combined_trends_discritized(dX_train)
+	combined_trends_test, combined_trends_interval_start_test, combined_trends_interval_end_test = sq.create_combined_trends_discritized(dX_test)
 
 	patterns = [None] * NUM_SIGNS
 	pattern_counts = Counter()
@@ -105,12 +111,13 @@ def seg_mining(use_all_signs):
 
 	threads = []
 	for i in xrange(NUM_SIGNS):
-		thread = Thread(target=process_sign, args=(i, combined_trends, combined_trends_interval_start, combined_trends_interval_end,  patterns, pattern_counts, all_pattern_supports))
-		thread.start()
-		threads.append(thread)
+		process_sign(i, combined_trends, combined_trends_interval_start, combined_trends_interval_end,  patterns, pattern_counts, all_pattern_supports)
+	# 	thread = Thread(target=process_sign, args=(i, combined_trends, combined_trends_interval_start, combined_trends_interval_end,  patterns, pattern_counts, all_pattern_supports))
+	# 	thread.start()
+	# 	threads.append(thread)
 	
-	for thread in threads:
-		thread.join()
+	# for thread in threads:
+	# 	thread.join()
 
 		# process_sign(i, combined_trends, combined_trends_interval_start, combined_trends_interval_end, patterns, pattern_counts, all_pattern_supports)
 		# for pattern_supports in all_pattern_supports[i]:
@@ -123,32 +130,42 @@ def seg_mining(use_all_signs):
 	print 'Iterations',len(patterns[1]), len(all_pattern_supports[1])
 	# print 'patterns in iteration 1 ',len(patterns[1][0]), len(all_pattern_supports[1][0])
 	
-	ranked_patterns = sq.chi_square(patterns, pattern_counts, all_pattern_supports)
-	print len(ranked_patterns),
-	ranked_patterns = ranked_patterns[:NUM_PATTERN_FEATURES]
-	print '->',len(ranked_patterns)
+	ranked_patterns_all = sq.chi_square(patterns, pattern_counts, all_pattern_supports)
 
-	
-	X_train_new = sq.construct_feature_vectors(ranked_patterns, \
-		(combined_trends, combined_trends_interval_start, combined_trends_interval_end), EXAMPLES_PER_SIGN)
-	X_test_new = sq.construct_feature_vectors(ranked_patterns, \
-		(combined_trends_test, combined_trends_interval_start_test, combined_trends_interval_end_test), 70 - EXAMPLES_PER_SIGN)
+	# NUM_PATTERN_FEATURES_ARRAY = [75, 100, 200, 300, 400, 500, 750, 1000, 1500]
+	# NUM_PATTERN_FEATURES_ARRAY = [400, 500, 750, 1000, 1500, 2000, 2500]
+	NUM_PATTERN_FEATURES_ARRAY = [NUM_PATTERN_FEATURES]
+	for num_pattern_features in NUM_PATTERN_FEATURES_ARRAY:
+		print '---------------------=================---------------------'
+		ranked_patterns = ranked_patterns_all[:num_pattern_features]
+		print len(ranked_patterns_all),'->',len(ranked_patterns)
+		
+		X_train_new = sq.construct_feature_vectors(ranked_patterns, \
+			(combined_trends, combined_trends_interval_start, combined_trends_interval_end), EXAMPLES_PER_SIGN)
+		X_test_new = sq.construct_feature_vectors(ranked_patterns, \
+			(combined_trends_test, combined_trends_interval_start_test, combined_trends_interval_end_test), 70 - EXAMPLES_PER_SIGN)
 
-	svm_model = svm.SVC(C=PENALTY, kernel="linear", decision_function_shape='ovr')
-	svm_model.fit(X_train_new, y_train)
-	y_predict_train = svm_model.predict(X_train_new)
-	y_predict = svm_model.predict(X_test_new)
+		svm_model = svm.SVC(C=PENALTY, kernel="linear", decision_function_shape='ovr')
+		svm_model.fit(X_train_new, y_train)
+		y_predict_train = svm_model.predict(X_train_new)
+		y_predict = svm_model.predict(X_test_new)
 
-	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names)
-	print 'STEADY_THRESHOLD',STEADY_THRESHOLD
-	print 'WINDOW_SIZE',WINDOW_SIZE
-	print 'MIN_SUPPORT',MIN_SUPPORT
-	print 'K',K
-	print 'NUM_PATTERN_FEATURES',NUM_PATTERN_FEATURES
-	print 'NUM_SIGNS',NUM_SIGNS
-	print 'NUM_SIGNALS',NUM_SIGNALS
-	print 'EXAMPLES_PER_SIGN',EXAMPLES_PER_SIGN
-	print 'PENALTY',PENALTY
+		# np.save('../data/seq_mining_features/X_train-%d.npy'%num_pattern_features, X_train_new)
+		# np.save('../data/seq_mining_features/X_test-%d.npy'%num_pattern_features, X_test_new)
+		# np.save('../data/seq_mining_features/y_train-%d.npy'%num_pattern_features, y_train)
+		# np.save('../data/seq_mining_features/y_test-%d.npy'%num_pattern_features, y_test)
+
+		analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names)
+		print 'STEADY_THRESHOLD',STEADY_THRESHOLD
+		print 'WINDOW_SIZE',WINDOW_SIZE
+		print 'MIN_SUPPORT',MIN_SUPPORT
+		print 'K',K
+		print 'NUM_PATTERN_FEATURES',num_pattern_features
+		print 'NUM_SIGNS',NUM_SIGNS
+		print 'NUM_SIGNALS',NUM_SIGNALS
+		print 'EXAMPLES_PER_SIGN',EXAMPLES_PER_SIGN
+		print 'PENALTY',PENALTY
+	print '---------------------=================---------------------'
 
 
 if __name__ == '__main__':

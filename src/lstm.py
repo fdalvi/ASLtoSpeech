@@ -46,22 +46,50 @@ def run_nn(quality='low'):
 	print y_train_one_hot.shape
 
 	lstm_model = Sequential()
+
+	############################## MODEL 1 ##############################
+	# Average Precision: 0.109463986213
+	# Average Recall: 0.0912280701754
+	# Average F1: 0.0664461045921
+	# Training Error: 0.852201933405
+	# Testing Error: 0.908771929825
+	# HIDDEN_LAYER = 300
+	# lstm_model.add(LSTM(output_dim=HIDDEN_LAYER, 
+	# 					input_dim=X_train.shape[2], 
+	# 					activation='tanh', 
+	# 					inner_activation='hard_sigmoid',
+	# 					return_sequences=False))
+	# lstm_model.add(Dense(y_train_one_hot.shape[1], activation='tanh'))
+	# lstm_model.compile(loss='mean_squared_error', optimizer='rmsprop')
+	# lstm_model.fit(X_train, y_train_one_hot, batch_size=16, nb_epoch=10)
+	############################## MODEL 1 ##############################
+	#
+	############################### MODEL 2 ##############################
+	# Average Precision: 0.109463986213
+	# Average Recall: 0.0912280701754
+	# Average F1: 0.0664461045921
+	# Training Error: 0.852201933405
+	# Testing Error: 0.908771929825
 	HIDDEN_LAYER = 300
-	# lstm_model.add(Embedding(flattened_Xtrain.shape[1], 256, input_length=maxlen))
 	lstm_model.add(LSTM(output_dim=HIDDEN_LAYER, 
 						input_dim=X_train.shape[2], 
 						activation='tanh', 
 						inner_activation='hard_sigmoid',
 						return_sequences=False))
-	lstm_model.add(Dense(y_train.shape[0], activation='tanh'))
 	
+	lstm_model.add(LSTM(HIDDEN_LAYER,
+						activation='tanh', 
+						inner_activation='hard_sigmoid',
+						return_sequences=False))
+	lstm_model.add(Dense(y_train_one_hot.shape[1], activation='tanh'))
+	lstm_model.compile(loss='mean_squared_error', optimizer='rmsprop')
+	lstm_model.fit(X_train, y_train_one_hot, batch_size=16, nb_epoch=10)
+	############################## MODEL 2 ##############################
 	# lstm_model.add(Dropout(0.5))
 	# lstm_model.add(Dense(95))
 	# lstm_model.add(Activation('softmax'))
 
-	lstm_model.compile(loss='mean_squared_error', optimizer='rmsprop')
-
-	lstm_model.fit(X_train, y_train_one_hot, batch_size=16, nb_epoch=10)
+	
 	# score = model.evaluate(X_test, Y_test, batch_size=16)
 
 	y_predict_train = lstm_model.predict_classes(X_train)
@@ -72,9 +100,9 @@ def run_nn(quality='low'):
 	# print y_predict_one_hot
 
 	# print metrics and confusion plot
-	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names)
+	analysis.run_analyses(y_predict_train, y_train, y_predict, y_test, class_names, False, False)
 
 	print y_predict
 
 if __name__ == '__main__':
-	run_nn('high')
+	run_nn('low')

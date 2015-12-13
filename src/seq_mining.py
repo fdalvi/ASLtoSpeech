@@ -19,14 +19,14 @@ from collections import Counter
 # VERY_INCREASING_THRESHOLD = 0.6 
 
 STEADY_THRESHOLD = 0.1
-WINDOW_SIZE = 5
+WINDOW_SIZE = 2
 MIN_SUPPORT = 20
-K = 5
-NUM_PATTERN_FEATURES = 500
-NUM_SIGNS = 5
+K = 2
+NUM_PATTERN_FEATURES = 400
+NUM_SIGNS = 95
 NUM_SIGNALS = 8
 EXAMPLES_PER_SIGN = 49
-PENALTY = 0.1
+PENALTY = 0.01
 
 trends = ['WD', 'VD', 'D', 'S', 'I', 'VI', 'WI']
 
@@ -40,6 +40,49 @@ def get_trend_idx(trend):
 		return trends.index(trend)
 	return -1 
 
+def create_combined_trends_discritized(dX):
+	# WI_idx = np.where(dX > VERY_INCREASING_THRESHOLD)
+	# WD_idx = np.where(dX < -1*VERY_INCREASING_THRESHOLD)
+
+	VI_idx = np.where(dX > 0.7+STEADY_THRESHOLD)
+
+	I_idx = np.where(np.abs(dX-0.7) <= STEADY_THRESHOLD)
+	
+	S_idx = np.where(np.abs(dX-0.5) <= STEADY_THRESHOLD)
+
+	D_idx = np.where(np.abs(dX-0.3) <= STEADY_THRESHOLD)
+
+	VD_idx = np.where(dX < 0.3-STEADY_THRESHOLD)
+
+	trends = np.zeros(dX.shape, dtype=np.int8)
+	trends[I_idx] = get_trend_idx('I')
+	trends[S_idx] = get_trend_idx('S')
+	trends[D_idx] = get_trend_idx('D')
+	trends[VI_idx] = get_trend_idx('VI')
+	trends[VD_idx] = get_trend_idx('VD')
+	
+	# Combine trends
+	# Intervals are inclusive in nature
+	combined_trends = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+	combined_trends_interval_start = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+	combined_trends_interval_end = np.ones(trends.shape, dtype=np.int8) * get_trend_idx('useless')
+
+	for e in xrange(combined_trends.shape[0]):
+		for f in xrange(combined_trends.shape[1]):
+			combined_trend_idx = 0
+			combined_trends[e,f,0] = trends[e,f,0]
+			combined_trends_interval_start[e,f,0] = 0
+			for t in xrange(1, combined_trends.shape[2]):
+				if trends[e,f,t] != trends[e,f,t-1]:
+					# Set End time for previous trend
+					combined_trends_interval_end[e,f,combined_trend_idx] = t
+
+					# Start next trend
+					combined_trend_idx += 1
+					combined_trends[e,f,combined_trend_idx] = trends[e,f,t]
+					combined_trends_interval_start[e,f,combined_trend_idx] = t
+
+	return combined_trends, combined_trends_interval_start, combined_trends_interval_end
 
 def create_combined_trends(dX): 
 	# I_idx = np.where(dX > STEADY_THRESHOLD)
