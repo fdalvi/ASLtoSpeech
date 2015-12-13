@@ -24,8 +24,8 @@ def main():
 	ax2 = fig.add_subplot(gs[0,1])
 	ax2.plot(X, W, 'r-')
 	ax2.axis([0, 100, 0, 10])
-	plt.ylabel('Optimal window size')
-	plt.xlabel('Dataset size')
+	plt. ylabel('Optimal window size')
+	plt. xlabel('Dataset size')
 	plt.show()
 
 if __name__ == '__main__':
